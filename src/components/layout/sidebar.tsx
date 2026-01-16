@@ -1,6 +1,6 @@
 
 import Link from "next/link"
-import { LayoutDashboard, Users, UserPlus, Settings, LogOut } from "lucide-react"
+import { LayoutDashboard, Users, UserPlus, LogOut, Network } from "lucide-react"
 
 export function Sidebar() {
     return (
@@ -11,35 +11,42 @@ export function Sidebar() {
             <nav className="flex-1 space-y-2 p-4">
                 <Link
                     href="/"
-                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-white hover:bg-zinc-800"
                 >
                     <LayoutDashboard size={20} />
-                    <span>Dashboard</span>
+                    <span>대시보드</span>
                 </Link>
                 <div className="pt-4">
-                    <p className="px-3 text-xs font-semibold uppercase text-zinc-500">User Management</p>
+                    <p className="px-3 text-xs font-semibold uppercase text-zinc-500">사용자 관리</p>
                     <div className="mt-2 space-y-1">
                         <Link
+                            href="/organization"
+                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-white hover:bg-zinc-800"
+                        >
+                            <Network size={20} />
+                            <span>조직도</span>
+                        </Link>
+                        <Link
                             href="/users"
-                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-white hover:bg-zinc-800"
                         >
                             <Users size={20} />
-                            <span>Users</span>
+                            <span>사용자 목록</span>
                         </Link>
                         <Link
                             href="/users/create"
-                            className="flex items-center gap-3 rounded-lg bg-zinc-800 px-3 py-2 text-white"
+                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-white hover:bg-zinc-800"
                         >
                             <UserPlus size={20} />
-                            <span>Register Account</span>
+                            <span>계정 등록</span>
                         </Link>
                     </div>
                 </div>
             </nav>
             <div className="border-t border-zinc-800 p-4">
-                <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-zinc-400 hover:bg-zinc-800 hover:text-white">
+                <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-white hover:bg-zinc-800">
                     <LogOut size={20} />
-                    <span>Logout</span>
+                    <span>로그아웃</span>
                 </button>
             </div>
         </div>

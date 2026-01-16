@@ -23,15 +23,34 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { userSchema, UserFormValues } from "@/lib/validations/user"
+import { useOrganizationStore } from "@/store/use-organization-store"
+import { Department } from "@/data/organization"
 
-const DEPARTMENTS = [
-    { id: "dept_gwp", name: "J_GWP실" },
-    { id: "dept_finance", name: "A_재경실" },
-    { id: "dept_plan", name: "J_Business Planning" },
-    { id: "dept_jinhak", name: "J_진학닷컴사업본부" },
-]
+import { useEffect } from "react";
 
 export function UserRegisterForm() {
+    const { departments, fetchDepartments } = useOrganizationStore();
+
+    useEffect(() => {
+        fetchDepartments();
+    }, [fetchDepartments]);
+
+    // Flatten dictionary helper
+    const getVisibleDepartments = (depts: Department[]): Department[] => {
+        let result: Department[] = [];
+        for (const dept of depts) {
+            if (dept.isVisible) {
+                result.push(dept);
+                if (dept.children) {
+                    result = [...result, ...getVisibleDepartments(dept.children)];
+                }
+            }
+        }
+        return result;
+    };
+
+    const visibleDepartments = getVisibleDepartments(departments);
+
     const form = useForm<UserFormValues>({
         resolver: zodResolver(userSchema),
         defaultValues: {
@@ -129,7 +148,7 @@ export function UserRegisterForm() {
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {DEPARTMENTS.map((dept) => (
+                                            {visibleDepartments.map((dept) => (
                                                 <SelectItem key={dept.id} value={dept.id}>
                                                     {dept.name}
                                                 </SelectItem>

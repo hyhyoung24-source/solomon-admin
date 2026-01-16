@@ -37,9 +37,9 @@ export default async function UsersPage() {
     return (
         <div className="container mx-auto py-10">
             <div className="flex flex-col space-y-2 mb-8">
-                <h1 className="text-2xl font-bold tracking-tight">Active Users</h1>
+                <h1 className="text-2xl font-bold tracking-tight">사용자 목록</h1>
                 <p className="text-muted-foreground">
-                    A list of all users currently registered using the custom Postgres auth system.
+                    등록된 모든 사용자 현황입니다.
                 </p>
             </div>
 
@@ -47,13 +47,13 @@ export default async function UsersPage() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-[80px]">Avatar</TableHead>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Email</TableHead>
-                            <TableHead>Department</TableHead>
-                            <TableHead>Position</TableHead>
-                            <TableHead>Joined</TableHead>
-                            <TableHead className="text-right">Status</TableHead>
+                            <TableHead className="w-[80px]">프로필</TableHead>
+                            <TableHead>이름</TableHead>
+                            <TableHead>이메일</TableHead>
+                            <TableHead>부서</TableHead>
+                            <TableHead>직책</TableHead>
+                            <TableHead>가입일</TableHead>
+                            <TableHead className="text-right">상태</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -80,7 +80,7 @@ export default async function UsersPage() {
                                 </TableCell>
                                 <TableCell className="text-right">
                                     <Badge className="bg-green-600 hover:bg-green-700">
-                                        Active
+                                        활동중
                                     </Badge>
                                 </TableCell>
                             </TableRow>
@@ -88,7 +88,7 @@ export default async function UsersPage() {
                         {(!users || users.length === 0) && (
                             <TableRow>
                                 <TableCell colSpan={7} className="h-24 text-center">
-                                    No users found in the database.
+                                    등록된 사용자가 없습니다.
                                 </TableCell>
                             </TableRow>
                         )}
