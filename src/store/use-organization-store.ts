@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { Department } from "@/data/organization";
 import { createClient } from "@/utils/supabase/client";
 import { buildTree, FlatDepartment } from "@/lib/tree-utils";
+import { deleteDepartmentsAction, updateDepartmentAction } from "@/app/organization/actions";
 
 interface OrganizationStore {
     departments: Department[];
@@ -66,26 +67,26 @@ export const useOrganizationStore = create<OrganizationStore>((set, get) => ({
         await get().fetchDepartments();
     },
 
+
     removeDepartment: async (id) => {
-        const supabase = createClient();
-        // Since we enabled cascade delete in DB (hopefully) or we need to handle children.
-        // For now, let's assume we need to delete children manually or DB handles it.
-        // Our SQL didn't specify CASCADE. So we might need to be careful.
-        // But for MVP, let's just delete the ID.
-        const { error } = await supabase.from('departments').delete().eq('id', id);
-        if (error) console.error("Failed to delete department:", error);
-        await get().fetchDepartments();
+        try {
+            await deleteDepartmentsAction([id]);
+            await get().fetchDepartments();
+        } catch (error) {
+            console.error("Failed to delete department:", error);
+        }
     },
 
     removeDepartments: async (ids) => {
-        const supabase = createClient();
-        const { error } = await supabase.from('departments').delete().in('id', ids);
-        if (error) console.error("Failed to delete departments:", error);
-        await get().fetchDepartments();
+        try {
+            await deleteDepartmentsAction(ids);
+            await get().fetchDepartments();
+        } catch (error) {
+            console.error("Failed to delete departments:", error);
+        }
     },
 
     updateDepartment: async (id, updates) => {
-        const supabase = createClient();
         const dbUpdates: any = {};
         if (updates.name !== undefined) dbUpdates.name = updates.name;
         if (updates.code !== undefined) dbUpdates.code = updates.code;
@@ -95,9 +96,12 @@ export const useOrganizationStore = create<OrganizationStore>((set, get) => ({
         if (updates.isHrLinked !== undefined) dbUpdates.is_hr_linked = updates.isHrLinked;
         if (updates.isVisible !== undefined) dbUpdates.is_visible = updates.isVisible;
 
-        const { error } = await supabase.from('departments').update(dbUpdates).eq('id', id);
-        if (error) console.error("Failed to update department:", error);
-        await get().fetchDepartments();
+        try {
+            await updateDepartmentAction(id, dbUpdates);
+            await get().fetchDepartments();
+        } catch (error) {
+            console.error("Failed to update department:", error);
+        }
     },
 
     reorderDepartment: async (id, direction) => {

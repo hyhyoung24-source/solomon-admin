@@ -10,17 +10,25 @@ import {
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { UserActionsMenu } from "@/components/users/user-actions-menu";
 
 export const dynamic = "force-dynamic";
 
 export default async function UsersPage() {
     const supabase = await createClient();
 
-    // Try to fetch users from the 'users' table
     const { data: users, error } = await supabase
         .from("users")
         .select("*")
         .order("created_at", { ascending: false });
+
+    // Fetch departments for lookup and selection
+    const { data: departments } = await supabase
+        .from("departments")
+        .select("id, name")
+        .order("name");
+
+    const deptMap = new Map(departments?.map(d => [d.id, d.name]) || []);
 
     if (error) {
         return (
@@ -54,6 +62,7 @@ export default async function UsersPage() {
                             <TableHead>직책</TableHead>
                             <TableHead>가입일</TableHead>
                             <TableHead className="text-right">상태</TableHead>
+                            <TableHead className="w-[50px]"></TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -70,7 +79,9 @@ export default async function UsersPage() {
                                 <TableCell className="font-medium">{user.name}</TableCell>
                                 <TableCell>{user.email}</TableCell>
                                 <TableCell>
-                                    <Badge variant="outline">{user.dept_id || "N/A"}</Badge>
+                                    <Badge variant="outline">
+                                        {deptMap.get(user.dept_id) || user.dept_id || "미배정"}
+                                    </Badge>
                                 </TableCell>
                                 <TableCell>{user.position}</TableCell>
                                 <TableCell>
@@ -83,11 +94,14 @@ export default async function UsersPage() {
                                         활동중
                                     </Badge>
                                 </TableCell>
+                                <TableCell>
+                                    <UserActionsMenu user={user} departments={departments || []} />
+                                </TableCell>
                             </TableRow>
                         ))}
                         {(!users || users.length === 0) && (
                             <TableRow>
-                                <TableCell colSpan={7} className="h-24 text-center">
+                                <TableCell colSpan={8} className="h-24 text-center">
                                     등록된 사용자가 없습니다.
                                 </TableCell>
                             </TableRow>

@@ -60,8 +60,7 @@ function TreeNode({ dept, users, level, selectedId, onSelect }: TreeNodeProps) {
             <div
                 className={cn(
                     "flex items-center py-1 px-2 rounded cursor-pointer transition-colors",
-                    isSelected ? "bg-blue-100 ring-1 ring-blue-300" : "hover:bg-zinc-100",
-                    level > 0 && "ml-4"
+                    isSelected ? "bg-blue-100 ring-1 ring-blue-300" : "hover:bg-zinc-100"
                 )}
                 onClick={handleToggle}
             >
@@ -79,7 +78,7 @@ function TreeNode({ dept, users, level, selectedId, onSelect }: TreeNodeProps) {
             </div>
 
             {isOpen && hasChildren && (
-                <div className="relative">
+                <div className="relative ml-4">
                     {/* Dotted vertical line for tree structure visual */}
                     {level > 0 && <div className="absolute left-[13px] top-0 bottom-0 w-px border-l border-dotted border-zinc-300 pointer-events-none" style={{ left: `${(level * 16) + 21}px` }}></div>}
 
