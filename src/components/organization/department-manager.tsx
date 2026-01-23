@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Trash, ArrowUp, ArrowDown, Download, RefreshCw, Settings, FileSpreadsheet, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -17,9 +17,15 @@ interface DepartmentManagerProps {
 }
 
 export function DepartmentManager({ selectedId }: DepartmentManagerProps) {
-    const { departments, addDepartment, removeDepartments, updateDepartment, reorderDepartment } = useOrganizationStore();
+    const { departments, addDepartment, removeDepartments, updateDepartment, reorderDepartment, deptUsers } = useOrganizationStore();
     const [selectedSubDeptIds, setSelectedSubDeptIds] = useState<string[]>([]);
     const [unsavedChanges, setUnsavedChanges] = useState<{ [key: string]: string }>({});
+
+    // Reset selection when department changes or structure changes
+    useEffect(() => {
+        setSelectedSubDeptIds([]);
+        setUnsavedChanges({});
+    }, [selectedId, departments]);
 
     // Recursive helper to find the selected department
     const findDept = (depts: Department[], id: string): Department | null => {
@@ -35,6 +41,7 @@ export function DepartmentManager({ selectedId }: DepartmentManagerProps) {
 
     const selectedDept = selectedId ? findDept(departments, selectedId) : null;
     const subDepartments = selectedDept?.children || [];
+    const isLeaf = subDepartments.length === 0;
 
     const handleSelectAll = (checked: boolean) => {
         if (checked) {
@@ -71,10 +78,10 @@ export function DepartmentManager({ selectedId }: DepartmentManagerProps) {
         });
     };
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
         if (selectedSubDeptIds.length === 0) return;
         if (confirm(`${selectedSubDeptIds.length}개의 부서를 삭제하시겠습니까?`)) {
-            removeDepartments(selectedSubDeptIds);
+            await removeDepartments(selectedSubDeptIds);
             setSelectedSubDeptIds([]);
         }
     };
@@ -177,30 +184,52 @@ export function DepartmentManager({ selectedId }: DepartmentManagerProps) {
             <div className="p-4 flex-1 overflow-auto">
                 <div className="mb-4">
                     <h2 className="text-lg font-bold">{selectedDept.name} ({selectedDept.code || 'N/A'})</h2>
-                    <p className="text-sm text-muted-foreground">하위 부서 목록</p>
+                    <p className="text-sm text-muted-foreground">
+                        {isLeaf ? "부서원 목록" : "하위 부서 목록"}
+                    </p>
                 </div>
 
                 <div className="border rounded-md">
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[40px] text-center">
-                                    <Checkbox
-                                        checked={subDepartments.length > 0 && selectedSubDeptIds.length === subDepartments.length}
-                                        onCheckedChange={handleSelectAll}
-                                    />
-                                </TableHead>
-                                <TableHead>부서명</TableHead>
-                                <TableHead className="w-[100px] text-center">부서표시여부</TableHead>
+                                {isLeaf ? (
+                                    <>
+                                        <TableHead>이름</TableHead>
+                                        <TableHead>직급</TableHead>
+                                        <TableHead>이메일</TableHead>
+                                    </>
+                                ) : (
+                                    <>
+                                        <TableHead className="w-[40px] text-center">
+                                            <Checkbox
+                                                checked={subDepartments.length > 0 && selectedSubDeptIds.length === subDepartments.length}
+                                                onCheckedChange={handleSelectAll}
+                                            />
+                                        </TableHead>
+                                        <TableHead>부서명</TableHead>
+                                        <TableHead className="w-[100px] text-center">부서표시여부</TableHead>
+                                    </>
+                                )}
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {subDepartments.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
-                                        하위 부서가 없습니다.
-                                    </TableCell>
-                                </TableRow>
+                            {isLeaf ? (
+                                deptUsers.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
+                                            등록된 부서원이 없습니다.
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    deptUsers.map((user) => (
+                                        <TableRow key={user.id} className="hover:bg-zinc-50">
+                                            <TableCell>{user.name}</TableCell>
+                                            <TableCell>{user.position}</TableCell>
+                                            <TableCell>{user.email || "-"}</TableCell>
+                                        </TableRow>
+                                    ))
+                                )
                             ) : (
                                 subDepartments.map((dept) => (
                                     <TableRow

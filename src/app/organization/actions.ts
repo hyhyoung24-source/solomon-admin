@@ -22,6 +22,8 @@ export async function deleteDepartmentsAction(ids: string[]) {
     revalidatePath('/organization');
 }
 
+
+
 // Also adding update for checking the checkbox issue if RLS related
 export async function updateDepartmentAction(id: string, updates: any) {
     const supabase = createAdminClient();
@@ -32,4 +34,29 @@ export async function updateDepartmentAction(id: string, updates: any) {
 
     if (error) throw new Error(error.message);
     revalidatePath('/organization');
+}
+
+export async function createDepartmentAction(dept: any) {
+    const supabase = createAdminClient();
+    const { error } = await supabase
+        .from('departments')
+        .insert(dept);
+
+
+
+    if (error) {
+        throw new Error(error.message);
+    }
+    revalidatePath('/organization');
+}
+
+export async function getUsersByDeptAction(deptId: string) {
+    const supabase = createAdminClient();
+    const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('dept_id', deptId);
+
+    if (error) throw new Error(error.message);
+    return data;
 }

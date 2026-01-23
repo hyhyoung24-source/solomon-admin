@@ -1,17 +1,19 @@
 import { create } from "zustand";
-import { Department } from "@/data/organization";
+import { Department, User } from "@/data/organization";
 import { createClient } from "@/utils/supabase/client";
 import { buildTree, FlatDepartment } from "@/lib/tree-utils";
-import { deleteDepartmentsAction, updateDepartmentAction } from "@/app/organization/actions";
+import { deleteDepartmentsAction, updateDepartmentAction, createDepartmentAction, getUsersByDeptAction } from "@/app/organization/actions";
 
 interface OrganizationStore {
     departments: Department[];
     selectedDeptId: string | null;
     isLoading: boolean;
+    deptUsers: User[];
 
     // Actions
     fetchDepartments: () => Promise<void>;
     selectDepartment: (id: string) => void;
+    fetchDeptUsers: (deptId: string) => Promise<void>;
     addDepartment: (parentId: string, dept: Partial<Department>) => Promise<void>;
     removeDepartment: (id: string) => Promise<void>;
     removeDepartments: (ids: string[]) => Promise<void>;
@@ -23,6 +25,7 @@ export const useOrganizationStore = create<OrganizationStore>((set, get) => ({
     departments: [],
     selectedDeptId: null,
     isLoading: false,
+    deptUsers: [],
 
     fetchDepartments: async () => {
         set({ isLoading: true });
@@ -42,10 +45,31 @@ export const useOrganizationStore = create<OrganizationStore>((set, get) => ({
         set({ departments: tree, isLoading: false });
     },
 
-    selectDepartment: (id) => set({ selectedDeptId: id }),
+    selectDepartment: (id) => {
+        set({ selectedDeptId: id });
+        get().fetchDeptUsers(id);
+    },
+
+    fetchDeptUsers: async (deptId) => {
+        // Clear previous users first? Or keep them while loading?
+        set({ deptUsers: [] });
+        try {
+            const users = await getUsersByDeptAction(deptId);
+            const mappedUsers: User[] = (users || []).map((u: any) => ({
+                id: u.id,
+                name: u.name,
+                email: u.email,
+                position: u.position,
+                deptId: u.dept_id
+            }));
+            set({ deptUsers: mappedUsers });
+        } catch (error) {
+            console.error("Failed to fetch users:", error);
+        }
+    },
 
     addDepartment: async (parentId, deptToCreate) => {
-        const supabase = createClient();
+        // ... (rest of addDepartment)
         const newId = crypto.randomUUID();
         const newDept = {
             id: newId,
@@ -59,16 +83,16 @@ export const useOrganizationStore = create<OrganizationStore>((set, get) => ({
             is_visible: deptToCreate.isVisible ?? true,
         };
 
-        const { error } = await supabase.from('departments').insert(newDept);
-        if (error) {
+        try {
+            await createDepartmentAction(newDept);
+            await get().fetchDepartments();
+        } catch (error) {
             console.error("Failed to add department:", error);
-            return;
         }
-        await get().fetchDepartments();
     },
 
-
     removeDepartment: async (id) => {
+        // ...
         try {
             await deleteDepartmentsAction([id]);
             await get().fetchDepartments();
@@ -87,6 +111,7 @@ export const useOrganizationStore = create<OrganizationStore>((set, get) => ({
     },
 
     updateDepartment: async (id, updates) => {
+        // ...
         const dbUpdates: any = {};
         if (updates.name !== undefined) dbUpdates.name = updates.name;
         if (updates.code !== undefined) dbUpdates.code = updates.code;
@@ -105,12 +130,8 @@ export const useOrganizationStore = create<OrganizationStore>((set, get) => ({
     },
 
     reorderDepartment: async (id, direction) => {
-        // Reordering needs access to siblings to swap sort_order.
-        // This is complex via DB calls. For now, fetch, swap locally, then update both.
-        const state = get();
-        // We will just do a simple swap of sort_order between two items.
-        // Note: this implementation relies on fetchDepartments refreshing the correct order.
-        // Implementing robust reorder requires finding the adjacent item in the tree.
+        // ...
         alert("Reorder implementation pending DB sync optimization.");
     }
 }));
+
