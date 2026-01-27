@@ -40,6 +40,7 @@ create table if not exists public.approval_documents (
   dept_id text, -- link to dept
   status text not null default 'temp', -- 'temp', 'progress', 'approved', 'rejected'
   is_urgent boolean default false,
+  related_doc_ids text[],
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
