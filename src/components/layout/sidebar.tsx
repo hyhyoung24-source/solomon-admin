@@ -1,6 +1,6 @@
 
 import Link from "next/link"
-import { LayoutDashboard, Users, UserPlus, LogOut, Network } from "lucide-react"
+import { LayoutDashboard, Users, UserPlus, LogOut, Network, FileText } from "lucide-react"
 
 export function Sidebar() {
     return (
@@ -42,13 +42,25 @@ export function Sidebar() {
                         </Link>
                     </div>
                 </div>
-            </nav>
+                <div className="pt-4">
+                    <p className="px-3 text-xs font-semibold uppercase text-zinc-500">양식 관리</p>
+                    <div className="mt-2 space-y-1">
+                        <Link
+                            href="/forms"
+                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-white hover:bg-zinc-800"
+                        >
+                            <FileText size={20} />
+                            <span>양식 목록</span>
+                        </Link>
+                    </div>
+                </div>
+            </nav >
             <div className="border-t border-zinc-800 p-4">
                 <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-white hover:bg-zinc-800">
                     <LogOut size={20} />
                     <span>로그아웃</span>
                 </button>
             </div>
-        </div>
+        </div >
     )
 }
