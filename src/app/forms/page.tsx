@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from "react"
-import { getDocumentFormsAction, createDocumentFormAction, deleteDocumentFormAction, getCategoriesAction, type DocumentForm, type FormCategory } from "./actions"
+import { getDocumentFormsAction, createDocumentFormAction, deleteDocumentFormAction, updateDocumentFormAction, getCategoriesAction, getDepartmentsAction, type DocumentForm, type FormCategory, type Department } from "./actions"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -27,19 +27,23 @@ import { Settings, Plus } from "lucide-react"
 export default function FormsPage() {
     const [forms, setForms] = useState<DocumentForm[]>([])
     const [categories, setCategories] = useState<FormCategory[]>([])
+    const [departments, setDepartments] = useState<Department[]>([])
     const [isOpen, setIsOpen] = useState(false)
+    const [editingForm, setEditingForm] = useState<DocumentForm | null>(null)
 
     useEffect(() => {
         loadData()
     }, [])
 
     const loadData = async () => {
-        const [formsData, catsData] = await Promise.all([
+        const [formsData, catsData, deptsData] = await Promise.all([
             getDocumentFormsAction(),
-            getCategoriesAction()
+            getCategoriesAction(),
+            getDepartmentsAction()
         ])
         setForms(formsData)
         setCategories(catsData)
+        setDepartments(deptsData)
     }
 
     const handleDelete = async (id: string) => {
@@ -100,6 +104,36 @@ export default function FormsPage() {
                                     <p className="text-[10px] text-muted-foreground">시스템 내부 식별용 ID입니다.</p>
                                 </div>
                                 <div className="space-y-2">
+                                    <Label>기본 처리부서 (선택)</Label>
+                                    <Select name="default_processing_dept_id">
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="부서 선택" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">선택 안함</SelectItem>
+                                            {departments.map(d => (
+                                                <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <p className="text-[10px] text-muted-foreground">이 양식으로 기안 작성 시 기본 설정될 처리부서입니다.</p>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>2차 처리부서 (선택)</Label>
+                                    <Select name="second_processing_dept_id">
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="부서 선택" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">선택 안함</SelectItem>
+                                            {departments.map(d => (
+                                                <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <p className="text-[10px] text-muted-foreground">필요 시 추가로 협조/처리가 필요한 부서입니다.</p>
+                                </div>
+                                <div className="space-y-2">
                                     <Label>정렬 순서</Label>
                                     <Input name="sort_order" type="number" defaultValue="0" />
                                 </div>
@@ -114,12 +148,20 @@ export default function FormsPage() {
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {forms.map((form) => (
-                    <Card key={form.id}>
+                    <Card key={form.id} className="cursor-pointer hover:border-blue-500 transition-all" onClick={() => setEditingForm(form)}>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium text-blue-600">
                                 {form.category}
                             </CardTitle>
-                            <Button variant="ghost" size="sm" onClick={() => handleDelete(form.id)} className="text-red-500 hover:text-red-700">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleDelete(form.id)
+                                }}
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                            >
                                 삭제
                             </Button>
                         </CardHeader>
@@ -128,15 +170,103 @@ export default function FormsPage() {
                             <div className="text-xs text-slate-400 mt-2">
                                 ID: {form.form_id}
                             </div>
+                            {form.default_processing_dept_name && (
+                                <div className="text-xs text-slate-500 mt-1 font-medium bg-slate-100 p-1 rounded inline-block">
+                                    처리부서: {form.default_processing_dept_name}
+                                    {form.second_processing_dept_name && ` / ${form.second_processing_dept_name}`}
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 ))}
-                {forms.length === 0 && (
-                    <div className="col-span-full text-center py-10 text-slate-400 border rounded-lg bg-slate-50">
-                        등록된 양식이 없습니다.
-                    </div>
-                )}
             </div>
+
+            {/* Edit Dialog */}
+            <Dialog open={!!editingForm} onOpenChange={(open) => !open && setEditingForm(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>양식 수정</DialogTitle>
+                    </DialogHeader>
+                    {editingForm && (
+                        <form action={async (formData) => {
+                            await updateDocumentFormAction(formData)
+                            setEditingForm(null)
+                            loadData()
+                        }} className="space-y-4">
+                            <Input type="hidden" name="id" value={editingForm.id} />
+
+                            <div className="space-y-2">
+                                <Label>카테고리</Label>
+                                <Select name="category_id" defaultValue={editingForm.category_id}>
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {categories.map(c => (
+                                            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>양식명</Label>
+                                <Input name="title" defaultValue={editingForm.title} required />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>양식 ID (영문 코드)</Label>
+                                <Input name="form_id" defaultValue={editingForm.form_id} required />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>기본 처리부서 (선택)</Label>
+                                <Select name="default_processing_dept_id" defaultValue={editingForm.default_processing_dept_id || "none"}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="부서 선택" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">선택 안함</SelectItem>
+                                        {departments.map(d => (
+                                            <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>2차 처리부서 (선택)</Label>
+                                <Select name="second_processing_dept_id" defaultValue={editingForm.second_processing_dept_id || "none"}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="부서 선택" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">선택 안함</SelectItem>
+                                        {departments.map(d => (
+                                            <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>정렬 순서</Label>
+                                <Input name="sort_order" type="number" defaultValue={editingForm.sort_order} />
+                            </div>
+
+                            <DialogFooter>
+                                <Button type="submit">수정 저장</Button>
+                            </DialogFooter>
+                        </form>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {forms.length === 0 && (
+                <div className="text-center py-10 text-slate-400 border rounded-lg bg-slate-50">
+                    등록된 양식이 없습니다.
+                </div>
+            )}
         </div>
     )
 }
